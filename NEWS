@@ -1,0 +1,52 @@
+beeswarm NEWS
+
+
+2010-10-06  v. 0.0.7
+
+Added "breast" data set.
+Change to "Artistic-2.0" license.
+Minor documentation adjustments.
+Added link to beeswarm web page.
+
+
+2010-02-22  v. 0.0.6
+
+Added arguments "bg" and "pwbg".
+The (invisibly) returned data frame now has a "bg" column.
+Throughout the entire package: change order of 
+  arguments to follow the "plot default": pch, col, bg
+Changed default "pch" to 1, to be consistent with other R functions.
+Added a check to avoid "smile" method && log=TRUE.
+
+
+2009-11-15  v. 0.0.5
+
+Bug fix: "smile" was crashing when 'x' contained missing values.
+
+
+2009-08-29  v. 0.0.4
+
+New function "smile".
+New "smile" method in "beeswarm".
+Adjust default so points are closer together. (was 0.1 inches, now 0.08 inches)
+
+
+2009-07-24  v. 0.0.3
+
+Changed this file to NEWS.
+Now "..." gets passed to "axis" and "box".
+Removed unnecessary "bty" argument.
+Add a warning when values are <= 0 and a log scale is used.
+
+
+2009-03-03  v. 0.0.2
+
+Fixed bugs in "beeswarm.formula" that caused pwcol and pwpch to be passed to "beeswarm.default" out of order.
+Added support for log scale.
+Reduced the "extendrange" factor, to leave less whitespace on edges of plot.
+
+
+2009-03-01  v. 0.0.1
+
+First release.
+
