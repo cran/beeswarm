@@ -10,33 +10,37 @@ beeswarm <- function (x, ...)
   UseMethod("beeswarm")
 
 
-beeswarm.numeric <- function(x, ...) {
-  x.list <- list(x)
-  names(x.list) <- deparse(substitute(x))
-  beeswarm(x.list, ...)
-}
-
+## here x should be a list or data.frame or numeric
 beeswarm.default <- function(x, 
-    method = c("center", "hex", "square", "smile"), 
+    method = c("swarm", "center", "hex", "square"), 
     vertical = TRUE, horizontal = !vertical, 
-    cex = par("cex"), spacing = 1, breaks = NULL,
+    cex = 1, spacing = 1, breaks = NULL,
     labels, at = NULL, 
-    pch = 1, col = 1, bg = col, 
-    pwpch = NULL, pwcol = NULL, pwbg = pwcol,
-    do.plot = TRUE, add = FALSE, 
-    xlim, ylim, log = FALSE, 
+    pch = par('pch'), col = par('col'), bg = NA, 
+    pwpch = NULL, pwcol = NULL, pwbg = NULL,
+    do.plot = TRUE, add = FALSE, log = FALSE, 
+    xlim = NULL, ylim = NULL, dlim = NULL, glim = NULL,
     xlab = NULL, ylab = NULL, dlab = "", glab = "",
     ...) {
     
   method = match.arg(method)
-  if(method == 'smile' && log) {
-    stop('The combination of method="smile" and log=TRUE is not supported')
+  if(length(cex) > 1) {
+    stop('the parameter "cex" must have length 1.')
   }
+  if(is.numeric(x)) {
+    x <- list(x)
+  }
+
   n.groups <- length(x)
 
+  #### Resolve group labels
   if(missing(labels)) {
     if(is.null(names(x))) {
-      labels <- 1:n.groups
+      if(n.groups == 1) {
+        labels <- NA
+      } else {
+        labels <- 1:n.groups
+      }
     } else {
       labels <- names(x)
     }
@@ -51,27 +55,57 @@ beeswarm.default <- function(x,
   if (is.null(dlab)) 
      dlab <- deparse(substitute(x))
 
-  # this provides a "group" vector to complement the usual "unlist"
-  unlist2 <- function(x, nms = names(x)) rep(nms, sapply(x, length))
+  ## this function returns a "group" vector, to complement "unlist"
+  unlistGroup <- function(x, nms = names(x)) rep(nms, sapply(x, length))
 
   x.val <- unlist(x)
-  x.gp <- unlist2(x)
+  x.gp <- unlistGroup(x, nms = labels)
   if((range(x.val, finite = TRUE)[1] <= 0) && log)
     warning('values <= 0 omitted from logarithmic plot')
   
   n.obs <- length(x.val)
   n.obs.per.group <- sapply(x, length)
-  if(missing(xlim)) xlim <- c(min(at) - 0.5, max(at) + 0.5)
-  if(missing(ylim)) {
-    if(log) {
-      ylim <- 10 ^ (extendrange(log10(x.val[x.val > 0])))
-    } else {
-      ylim <- extendrange(x.val, f = 0.01)
-    }
+  
+  #### Resolve xlim, ylim, dlim, xlab, ylab
+  if(is.null(dlim)) {
+      if(log) {
+        dlim <- 10 ^ (extendrange(log10(x.val[x.val > 0])))
+      } else {
+        dlim <- extendrange(x.val, f = 0.01)
+      }
   }
-
+  if(is.null(glim)) {
+    glim <- c(min(at) - 0.5, max(at) + 0.5)
+  }
+  if(horizontal) { 
+    if(is.null(ylim)) 
+      ylim <- glim
+    if(is.null(xlim)) {
+      xlim <- dlim
+    } else {
+      dlim <- xlim
+    }
+    if (is.null(xlab)) 
+      xlab <- dlab
+    if (is.null(ylab)) 
+      ylab <- glab
+  } else {     ## vertical
+    if(is.null(xlim)) 
+      xlim <- glim
+    if(is.null(ylim)) {
+      ylim <- dlim
+    } else {
+      dlim <- ylim
+    }
+    if (is.null(ylab)) 
+      ylab <- dlab
+    if (is.null(xlab)) 
+      xlab <- glab
+  }
+  
+  #### Resolve plotting characters and colors
   if(is.null(pwpch)) {
-    pch.out <- unlist2(x, nms = rep(pch, length.out = n.groups))
+    pch.out <- unlistGroup(x, nms = rep(pch, length.out = n.groups))
   } else {
     if(is.list(pwpch)) {
       names(pwpch) <- names(x)
@@ -84,7 +118,7 @@ beeswarm.default <- function(x,
   stopifnot(length(pch.out) == n.obs)
 
   if(is.null(pwcol)) {
-    col.out <- unlist2(x, nms = rep(col, length.out = n.groups))
+    col.out <- unlistGroup(x, nms = rep(col, length.out = n.groups))
   } else {
     if(is.list(pwcol)) {
       names(pwcol) <- names(x)
@@ -97,7 +131,7 @@ beeswarm.default <- function(x,
   stopifnot(length(col.out) == n.obs)
 
   if(is.null(pwbg)) {
-    bg.out <- unlist2(x, nms = rep(bg, length.out = n.groups))
+    bg.out <- unlistGroup(x, nms = rep(bg, length.out = n.groups))
   } else {
     if(is.list(pwbg)) {
       names(pwbg) <- names(x)
@@ -109,73 +143,62 @@ beeswarm.default <- function(x,
   }
   stopifnot(length(bg.out) == n.obs)
   
+  #### Set up the plot
   if(do.plot & !add) {
-    if(horizontal) {
-      if (is.null(xlab)) 
-        xlab <- dlab
-      if (is.null(ylab)) 
-        ylab <- glab
-      plot(ylim, xlim, 
-        type = 'n', axes = FALSE, 
-        log = ifelse(log, 'x', ''),
-        xlab = xlab, ylab = ylab, ...)
-    } else {     # vertical
-      if (is.null(ylab)) 
-         ylab <- dlab
-      if (is.null(xlab)) 
-         xlab <- glab
-      plot(xlim, ylim, 
-        type = 'n', axes = FALSE,  
-        log = ifelse(log, 'y', ''),
-        xlab = xlab, ylab = ylab, ...)
-    }
+    plot(xlim, ylim, 
+      type = 'n', axes = FALSE, 
+      log = ifelse(log, ifelse(horizontal, 'x', 'y'), ''),
+      xlab = xlab, ylab = ylab, ...)
   }
 
+  #### Calculate the size of a plotting character along group- or data-axis
+  sizeMultiplier <- par('cex') * cex * spacing
   if(horizontal) {
-    size.g <- yinch(0.08, warn.log = FALSE) * cex * spacing
-    size.d <- xinch(0.08, warn.log = FALSE) * cex * spacing
+    size.g <- yinch(0.08, warn.log = FALSE) * sizeMultiplier
+    size.d <- xinch(0.08, warn.log = FALSE) * sizeMultiplier
   } else {    # vertical
-    size.g <- xinch(0.08, warn.log = FALSE) * cex * spacing
-    size.d <- yinch(0.08, warn.log = FALSE) * cex * spacing
+    size.g <- xinch(0.08, warn.log = FALSE) * sizeMultiplier
+    size.d <- yinch(0.08, warn.log = FALSE) * sizeMultiplier
   }
   
-  if(method == 'smile') {
-
-    x.offset <- lapply(x, smile, xsize = size.d, ysize = size.g)
-    x.pos <- lapply(1:n.groups, function(i) at[i] + (x.offset[[i]]))
-
-    y.pos <- x
-
+  ## Calculate point positions g.pos, d.pos 
+  if(method == 'swarm') {
+    if(horizontal) {
+      g.offset <- lapply(x, function(a) swarmy(x = a, y = rep(0, length(a)), cex = sizeMultiplier)$y)
+    } else {
+      g.offset <- lapply(x, function(a) swarmx(x = rep(0, length(a)), y = a, cex = sizeMultiplier)$x)
+    }
+    g.pos <- lapply(1:n.groups, function(i) at[i] + g.offset[[i]])
+    d.pos <- x
   } else {
-      
       if(method == 'hex') size.d <- size.d * sqrt(3) / 2
     
       if(log) {
         if(is.null(breaks))
-          breaks <- 10 ^ seq(log10(ylim[1]), log10(ylim[2]) + size.d, by = size.d)
+          breaks <- 10 ^ seq(log10(dlim[1]), log10(dlim[2]) + size.d, by = size.d)
         if(length(breaks) == 1 && is.na(breaks[1])) {
-          y.index <- x
-          y.pos <- x
+          d.index <- x
+          d.pos <- x
         } else {
           mids <- 10 ^ ((log10(head(breaks, -1)) + log10(tail(breaks, -1))) / 2)
-          y.index <- lapply(x, cut, breaks = breaks, labels = FALSE)
-          y.pos <- lapply(y.index, function(a) mids[a])  
+          d.index <- lapply(x, cut, breaks = breaks, labels = FALSE)
+          d.pos <- lapply(d.index, function(a) mids[a])  
         }
       } else {
         if(is.null(breaks))
-          breaks <- seq(ylim[1], ylim[2] + size.d, by = size.d)
+          breaks <- seq(dlim[1], dlim[2] + size.d, by = size.d)
         if(length(breaks) == 1 && is.na(breaks[1])) {
-          y.index <- x
-          y.pos <- x
+          d.index <- x
+          d.pos <- x
         } else {
           mids <- (head(breaks, -1) + tail(breaks, -1)) / 2
-          y.index <- lapply(x, cut, breaks = breaks, labels = FALSE)
-          y.pos <- lapply(y.index, function(a) mids[a])  
+          d.index <- lapply(x, cut, breaks = breaks, labels = FALSE)
+          d.pos <- lapply(d.index, function(a) mids[a])  
         }
       }  
     
-      x.index <- lapply(y.index, function(v) {
-        if(length(v) == 0) return(v)
+      x.index <- lapply(d.index, function(v) {
+        if(length(na.omit(v)) == 0) return(v)
         v.s <- lapply(split(v, v), seq_along)
         if(method == 'center')
           v.s <- lapply(v.s, function(a) a - mean(a))
@@ -189,12 +212,11 @@ beeswarm.default <- function(x,
         unsplit(v.s, v)
       })  
       
-      x.pos <- lapply(1:n.groups, function(i) at[i] + (x.index[[i]] * size.g))
+      g.pos <- lapply(1:n.groups, function(i) at[i] + (x.index[[i]] * size.g))
     
   }
 
-  out <- data.frame(x = unlist(x.pos), 
-                    y = unlist(y.pos), 
+  out <- data.frame(x = unlist(g.pos), y = unlist(d.pos), 
                     pch = pch.out, col = col.out, bg = bg.out,
                     x.orig = x.gp, y.orig = x.val,
                     stringsAsFactors = FALSE)
@@ -249,9 +271,11 @@ beeswarm.formula <- function (formula, data = NULL, subset, na.action = NULL,
       pwpch = pwpch, pwcol = pwcol, pwbg = pwbg,
       dlab = dlab, glab = glab, ...)
 }
-  
-smile <- function(x, xsize, ysize) {
-  out <- data.frame(x = x / xsize, y = 0, i = seq(along = x))
+
+## hidden function  
+.calculateSwarm <- function(x, dsize, gsize) {
+  if(length(x) == 0) return(numeric(0))
+  out <- data.frame(x = x / dsize, y = 0, i = seq(along = x))
   out <- out[order(out$x), ]
   if(nrow(out) > 1) {
     for (i in 2:nrow(out)) {
@@ -277,7 +301,49 @@ smile <- function(x, xsize, ysize) {
   }
   out <- out[order(out$i), ]
   out[is.na(out$x), 'y'] <- NA  # missing x values should have missing y values
-  out$y * ysize
+  out$y * gsize
 }
+
+
+# jitter points horizontally
+swarmx <- function(x, y, 
+    xsize = xinch(0.08, warn.log = FALSE), 
+    ysize = yinch(0.08, warn.log = FALSE),
+    log = NULL, cex = par('cex')) { 
+  if(is.null(log)) 
+    log <- paste(ifelse(par('xlog'), 'x', ''), ifelse(par('ylog'), 'y', ''), sep = '')
+  xlog <- 'x' %in% strsplit(log, NULL)[[1L]]
+  ylog <- 'y' %in% strsplit(log, NULL)[[1L]]
+  xy <- xy.coords(x = x, y = y, recycle = TRUE, log = log)
+  stopifnot((length(unique(xy$x)) <= 1))
+  if(xlog) xy$x <- log10(xy$x)
+  if(ylog) xy$y <- log10(xy$y)
+  x.new <- xy$x + .calculateSwarm(xy$y, dsize = ysize * cex, gsize = xsize * cex)
+  out <- data.frame(x = x.new, y = y)
+  if(xlog) out$x <- 10 ^ out$x
+  out
+}
+
+# jitter points vertically
+swarmy <- function(x, y, 
+    xsize = xinch(0.08, warn.log = FALSE), 
+    ysize = yinch(0.08, warn.log = FALSE),
+    log = NULL, cex = par('cex')) { 
+  if(is.null(log)) 
+    log <- paste(ifelse(par('xlog'), 'x', ''), ifelse(par('ylog'), 'y', ''), sep = '')
+  xlog <- 'x' %in% strsplit(log, NULL)[[1L]]
+  ylog <- 'y' %in% strsplit(log, NULL)[[1L]]
+  xy <- xy.coords(x = x, y = y, recycle = TRUE, log = log)
+  stopifnot((length(unique(xy$y)) <= 1))
+  if(xlog) xy$x <- log10(xy$x)
+  if(ylog) xy$y <- log10(xy$y)
+  y.new <- xy$y + .calculateSwarm(xy$x, dsize = xsize * cex, gsize = ysize * cex)
+  out <- data.frame(x = x, y = y.new)
+  if(ylog) out$y <- 10 ^ out$y
+  out
+}
+
+
+
 
 

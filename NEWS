@@ -1,5 +1,32 @@
 beeswarm NEWS
 
+2011-08-04  v. 0.1.1
+
+Documentation fixes.
+Adjusted "beeswarm.default" to work when x is a simple numeric vector.
+Removed "beeswarm.numeric" .
+
+
+2011-08-03  v. 0.1.0
+
+In "beeswarm", defaults for "col", "pch" are now taken from "par", and "bg" defaults to NA, and "pwbg" defaults to NULL. 
+Renamed "smile" method; now it is called "swarm"
+Changed default method to "swarm"
+Removed function "smile"
+New functions "swarmx" and "swarmy" for easily adding swarm-ed points to a plot.
+Fixed bug affecting swarming when par('cex') was not 1.
+Fixed bug reversing xlim and ylim on horizontal plots.
+Fixed bug causing an error if xlim or ylim were set to NULL
+Defaults for xlim and ylim are now NULL instead of missing
+New argument 'dlim'
+Log scales are now supported.
+
+
+2011-04-14  v. 0.0.8
+
+Fixed a bug that caused an error if the input was a list without names.
+Fixed a bug that caused an error if all points in a group were NA (or if all points in a group were outside the range of ylim).
+
 
 2010-10-06  v. 0.0.7
 

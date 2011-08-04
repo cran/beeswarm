@@ -1,28 +1,28 @@
 \name{beeswarm}
 \alias{beeswarm}
-\alias{beeswarm.numeric}
 \alias{beeswarm.default}
 \alias{beeswarm.formula}
 \title{Bee swarm plot}
-\description{Create a bee swarm plot.  A bee swarm plot is a one-dimensional scatter plot similar to "stripchart", except that would-be overlapping points are separated such that each is visible.}
+\description{Create a bee swarm plot.  A bee swarm plot is a one-dimensional scatter plot similar to \code{\link{stripchart}}, but with a different set of methods to separate coincident points such that each point is visible.  Also, \code{beeswarm} introduces additional features unavailable in \code{stripchart}, such as the ability to control the color and plotting character of each point. }
 \usage{
 
 \method{beeswarm}{formula}(formula, data = NULL, subset, na.action = NULL, 
          pwpch = NULL, pwcol = NULL, pwbg = NULL, dlab, glab, ...)
 
 \method{beeswarm}{default}(x, 
-    method = c("center", "hex", "square", "smile"), 
+    method = c("swarm", "center", "hex", "square"), 
     vertical = TRUE, horizontal = !vertical, 
-    cex = par("cex"), spacing = 1, breaks = NULL,
+    cex = 1, spacing = 1, breaks = NULL,
     labels, at = NULL, 
-    pch = 1, col = 1, bg = col,
-    pwpch = NULL, pwcol = NULL, pwbg = pwcol,
-    do.plot = TRUE, add = FALSE, 
-    xlim, ylim, log = FALSE, 
+    pch = par('pch'), col = par('col'), bg = NA, 
+    pwpch = NULL, pwcol = NULL, pwbg = NULL,
+    do.plot = TRUE, add = FALSE, log = FALSE,
+    xlim = NULL, ylim = NULL, dlim = NULL, glim = NULL,
     xlab = NULL, ylab = NULL, dlab = "", glab = "",
     ...)
 
 }
+
 \arguments{
   \item{formula}{A formula, such as \code{y ~ grp}, where \code{y} is a
     numeric vector of data values to be split into groups according to
@@ -30,40 +30,37 @@
   \item{data}{A data.frame (or list) from which the variables in
     \code{formula} should be taken.}
   \item{subset}{An optional vector specifying a subset of observations
-    to be used for plotting.}
+    to be used.}
   \item{na.action}{A function which indicates what should happen
-    when the data contain \code{NA}s.  The default is to ignore missing
+    when the data contain \code{NA}s.  The default is to quietly ignore missing
     values in either the response or the group.}
-  \item{x}{ A list of numeric vectors, each of which is plotted as an individual swarm.}
+  \item{x}{ A numeric vector, or a data frame or list of numeric vectors, each of which is plotted as an individual swarm.}
   \item{method}{ Method for arranging points (see Details). }
   \item{vertical, horizontal}{ Orientation of the plot. \code{horizontal} takes precedence if both are specified. }
-  \item{cex}{ Relative size of points. Unlike other plotting functions, this must be a single value.}
-  \item{spacing}{ Relative spacing between points. }
+  \item{cex}{ Size of points relative to the default given by \code{par("cex")}. Unlike other plotting functions, this must be a single value.}
+  \item{spacing}{ Relative spacing between points.}
   \item{breaks}{ Breakpoints (optional).  If \code{NULL}, breakpoints are chosen automatically. If \code{NA}, bins are not used (similar to \code{stripchart} with \code{method = "stack"}).}
   \item{labels}{ Labels for each group.  By default, these are inferred from the data. }
-  \item{at}{ Numeric vector giving the locations where the swarms should be drawn; defaults to 1:n where n is the number of groups. }
+  \item{at}{ Numeric vector giving the locations where the swarms should be drawn; defaults to \code{1:n} where \var{n} is the number of groups. }
   \item{pch, col, bg}{ Plotting characters and colors, specified by group (see Details). }
-  \item{pwpch, pwcol, pwbg}{ "Point-wise" plotting characters and colors, specified for each data point (see Details). }
+  \item{pwpch, pwcol, pwbg}{ \dQuote{Point-wise} plotting characters and colors, specified for each data point (see Details). }
   \item{do.plot}{ Draw a plot? }
   \item{add}{ Add to an existing plot? }
-  \item{xlim, ylim}{ Limits of the plot. }
   \item{log}{ Use a logarithmic scale on the data axis? }
+  \item{xlim, ylim}{ Limits of the plot. }
+  \item{dlim, glim}{ An alternative way to specify limits (see Details). }
   \item{xlab, ylab}{ Axis labels. }
-  \item{dlab, glab}{ An alternate way to specify axis labels (see Details). }
+  \item{dlab, glab}{ An alternative way to specify axis labels (see Details). }
   \item{\dots}{ Further arguments passed to \code{\link{plot}}. }
 }
 \details{ 
-This function is similar to \code{\link{stripchart}}, except with different methods for placing the points, and with a few extra features. 
+Several methods for placing the points are available; each method uses a different algorithm to avoid overlapping points. 
 
-Several methods for placing the points are available; each is designed to avoid overlapping points:
+The default method, \code{swarm}, places points in increasing order. If a point would overlap an existing point, it is shifted sideways (along the group axis) by a minimal amount sufficient to avoid overlap. \code{breaks} is ignored.
 
-The first three methods first discretize the values along the data axis, in order to create more efficient packing: \code{square} stacks the points on a square grid, whereas \code{hex} uses a hexagonal grid.  \code{center} uses an adjusted square grid to produce a symmetric swarm.
+The other three methods first discretize the values along the data axis, in order to create more efficient packing: \code{square} places the points on a square grid, whereas \code{hex} uses a hexagonal grid.  \code{center} uses a  square grid to produce a symmetric swarm. By default, the number of breakpoints for discretization is determined by a combination of the available plotting area and the plotting character size. The discretization of the data can be explicitly controlled using \code{breaks}. If \code{breaks} is set to \code{NA}, the data will not be grouped into intervals; this may be a sensible option if the data is already discrete.
 
-By default, the number of breakpoints for discretization is determined by a combination of the available plotting area and the plotting character size. Therefore, in contrast to most plotting functions, changing the plotting window size will often change the position of the points.  
-
-The discretization of the data can be explicitly controlled using \code{breaks}. If \code{breaks} is set to \code{NA}, the data will not be grouped into intervals; this may be a sensible option if the data is already discrete.
-
-The fourth method, \code{smile}, does not discretize the data.  Instead the points are simply shifted sideways (along the group axis) by a minimal amount, producing a somewhat erratic looking figure. \code{breaks} is ignored.
+In contrast to most other plotting functions, changing the size of the graphics device will often change the position of the points.  
 
 The plotting characters and colors can be controlled in two ways. First, the arguments \code{pch}, \code{col} and \code{bg} can specify plotting characters and colors in the same way as \code{\link{stripchart}} and \code{\link{boxplot}}: in short, the arguments apply to each group as a whole (and are recycled if necessary).
 
@@ -71,17 +68,15 @@ Alternatively, the characteristics of each individual data point can be controll
 
   The \code{dlab} and \code{glab} labels may be used instead of \code{xlab}
   and \code{ylab} if those are not specified.  \code{dlab} applies to the 
-  continuous data axis (the Y axis unless \code{horizontal} is \code{TRUE}),
-  \code{glab} to the group axis.
+  continuous data axis (the Y axis unless \code{horizontal} is \code{TRUE});
+  \code{glab} to the group axis. Likewise, \code{dlim} and \code{glim} can be used to specify limits of the axes instead of \code{xlim} or \code{ylim}.
 
 This function is intended to be mostly compatible with calls to \code{\link{stripchart}} or \code{\link{boxplot}}.  Thus, code that works with these functions should work with \code{beeswarm} with minimal modification.
 
 }
 \value{ A data frame with plotting information, invisibly. }
 \note{ 
-\code{xlim} and \code{ylim} are reversed on horizontal plots.
-
-\code{method = "smile"} is currently incompatible with a logarithmic scale.
+  No effort is made to avoid overlaps between points in different groups.
 }
 \seealso{ \code{\link{stripchart}}, \code{\link{boxplot}} }
 \examples{ 
@@ -91,16 +86,24 @@ This function is intended to be mostly compatible with calls to \code{\link{stri
     data = OrchardSprays, log = TRUE, 
     pch = 16, col = rainbow(8))
 
-  ## Demonstrating the use of 'pwcol'
-  data(breast)
-  beeswarm(ESR1 ~ ER, data = breast,
-    pch = 16, pwcol = event_survival + 1)
-  legend('topleft', legend = c('censored', 'metastasis'),
-    pch = 16, col = 1:2)
+  ## One of the examples from 'boxplot', with a beeswarm overlay
+   boxplot(len ~ dose, data = ToothGrowth,
+              main = "Guinea Pigs' Tooth Growth",
+              xlab = "Vitamin C dose mg",
+              ylab = "Tooth length")  
+   beeswarm(len ~ dose, data = ToothGrowth, col = 2, add = TRUE)
 
-  ## Demonstrating 'smile' method
+  ## Compare the 4 methods
+  op <- par(mfrow = c(2,2))
+  for (m in c("swarm", "center", "hex", "square")) {
+    beeswarm(len ~ dose, data = ToothGrowth, method = m, main = m)
+  }
+  par(op)
+
+  ## Demonstrate the use of 'pwcol'
+  data(breast)
   beeswarm(time_survival ~ event_survival, data = breast,
-    method = 'smile',
+    method = 'swarm',
     pch = 16, pwcol = as.numeric(ER),
     xlab = '', ylab = 'Follow-up time (months)',
     labels = c('Censored', 'Metastasis'))
@@ -109,22 +112,16 @@ This function is intended to be mostly compatible with calls to \code{\link{stri
 
   ## The list interface
   distributions <- list(runif = runif(100, min = -3, max = 3), 
-                        rnorm = rnorm(100))
-  beeswarm(distributions, col = 2:3)
+                        rnorm = rnorm(100),
+                        rlnorm = rlnorm(100, sdlog = 0.5))
+  beeswarm(distributions, col = 2:4)
 
-  ## the "bg" argument only has an effect if "pch" is in 21:25
-  beeswarm(distributions, pch = 21, bg = 2:3)
-
-  ## the "smile" method
-  beeswarm(distributions, col = 2:3, method = 'smile')
-
-  ## use of pwcol with the list interface 
-  myCol <- lapply(distributions, cut, breaks = 8)
+  ## Demonstrate 'pwcol' with the list interface 
+  myCol <- lapply(distributions, function(x) cut(x, breaks = quantile(x), labels = FALSE))
   beeswarm(distributions, pch = 16, pwcol = myCol)
-  
-  ## log scale
-  beeswarm(1:200, log = TRUE)
+  legend('bottomright', legend = 1:4, pch = 16, col = 1:4, title = 'Quartile')
+
 
   
 }
-\keyword{ misc }
+\keyword{ hplot }
