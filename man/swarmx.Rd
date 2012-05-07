@@ -7,11 +7,11 @@
 swarmx(x, y, 
     xsize = xinch(0.08, warn.log = FALSE), 
     ysize = yinch(0.08, warn.log = FALSE),
-    log = NULL, cex = par('cex'))
+    log = NULL, cex = par("cex"))
 swarmy(x, y, 
     xsize = xinch(0.08, warn.log = FALSE), 
     ysize = yinch(0.08, warn.log = FALSE),
-    log = NULL, cex = par('cex'))
+    log = NULL, cex = par("cex"))
 }
 \arguments{
   \item{x, y}{ Coordinate vectors in any format supported by \code{\link{xy.coords}}. }
@@ -38,7 +38,7 @@ points(swarmx(index + 1, values), col = 2)
 points(swarmx(index + 2, values, cex = 1.5), col = 3, cex = 1.5)
 
 ## Try the horizontal direction, with a log scale
-plot(values, index, log = 'x', ylim = c(-1, 2))
+plot(values, index, log = "x", ylim = c(-1, 2))
 points(swarmy(values, index + 1), col = 2)
 
 }

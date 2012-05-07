@@ -1,9 +1,9 @@
 # beeswarm.R
 #
-# 2010-05-02
 # Aron Charles Eklund
 #
-#
+# A part of the "beeswarm" R package
+# 
 
 
 beeswarm <- function (x, ...) 
@@ -16,7 +16,8 @@ beeswarm.default <- function(x,
     vertical = TRUE, horizontal = !vertical, 
     cex = 1, spacing = 1, breaks = NULL,
     labels, at = NULL, 
-    pch = par('pch'), col = par('col'), bg = NA, 
+    corral = c("none", "gutter", "wrap", "random", "omit"),
+    pch = par("pch"), col = par("col"), bg = NA, 
     pwpch = NULL, pwcol = NULL, pwbg = NULL,
     do.plot = TRUE, add = FALSE, log = FALSE, 
     xlim = NULL, ylim = NULL, dlim = NULL, glim = NULL,
@@ -24,8 +25,9 @@ beeswarm.default <- function(x,
     ...) {
     
   method = match.arg(method)
+  corral = match.arg(corral)
   if(length(cex) > 1) {
-    stop('the parameter "cex" must have length 1.')
+    stop('the parameter "cex" must have length 1')
   }
   if(is.numeric(x)) {
     x <- list(x)
@@ -161,14 +163,13 @@ beeswarm.default <- function(x,
     size.d <- yinch(0.08, warn.log = FALSE) * sizeMultiplier
   }
   
-  ## Calculate point positions g.pos, d.pos 
+## Calculate point positions g.pos, d.pos 
   if(method == 'swarm') {
     if(horizontal) {
       g.offset <- lapply(x, function(a) swarmy(x = a, y = rep(0, length(a)), cex = sizeMultiplier)$y)
     } else {
       g.offset <- lapply(x, function(a) swarmx(x = rep(0, length(a)), y = a, cex = sizeMultiplier)$x)
     }
-    g.pos <- lapply(1:n.groups, function(i) at[i] + g.offset[[i]])
     d.pos <- x
   } else {
       if(method == 'hex') size.d <- size.d * sqrt(3) / 2
@@ -210,11 +211,31 @@ beeswarm.default <- function(x,
           v.s[!odd.row] <- lapply(v.s[!odd.row], function(a) a - ceiling(mean(a)) + 0.25)
         }
         unsplit(v.s, v)
-      })  
+      }) 
       
-      g.pos <- lapply(1:n.groups, function(i) at[i] + (x.index[[i]] * size.g))
-    
+      g.offset <- lapply(1:n.groups, function(i) x.index[[i]] * size.g)
   }
+
+  ## now check for runaway points
+  if(n.groups > 1) {
+    wid <- (min(at[-1] - at[-n.groups]) - (2 * size.g)) / 2
+  } else {
+    wid <- min(diff(c(par('usr')[1], at, par('usr')[2]))) - size.g
+  }
+  if(corral == 'gutter') {
+    g.offset <- lapply(g.offset, function(zz) pmin(wid, pmax(-wid, zz)))
+  }
+  if(corral == 'wrap') {
+    g.offset <- lapply(g.offset, function(zz) ((zz + wid) %% (wid * 2)) - wid)
+  }  
+  if(corral == 'random') {
+    g.offset <- lapply(g.offset, function(zz) ifelse(zz > wid | zz < -wid, runif(length(zz), -wid, wid), zz))
+  }
+  if(corral == 'omit') {
+    g.offset <- lapply(g.offset, function(zz) ifelse(zz > wid, NA, ifelse(zz < -wid, NA, zz)))
+  }
+  
+  g.pos <- lapply(1:n.groups, function(i) at[i] + g.offset[[i]])
 
   out <- data.frame(x = unlist(g.pos), y = unlist(d.pos), 
                     pch = pch.out, col = col.out, bg = bg.out,
@@ -260,17 +281,18 @@ beeswarm.formula <- function (formula, data = NULL, subset, na.action = NULL,
     response <- attr(attr(mf, "terms"), "response")
     if (missing(dlab)) 
         dlab <- names(mf)[response]
-    # assume second term is the grouping factor!!!!
     if (missing(glab)) 
-        glab <- names(mf)[2]
-    # assume second term is the grouping factor!!!!
-    if(!is.null(mf$'(pwpch)')) pwpch <- split(mf$'(pwpch)', mf[[2]])
-    if(!is.null(mf$'(pwcol)')) pwcol <- split(mf$'(pwcol)', mf[[2]])
-    if(!is.null(mf$'(pwbg)')) pwbg <- split(mf$'(pwbg)', mf[[2]])
-    beeswarm(split(mf[[response]], mf[[2]]), 
+        glab <- as.character(formula)[3]
+    f <- mf[-response]
+    f <- f[names(f) %in% attr(attr(mf, "terms"), "term.labels")]
+    if(!is.null(mf$'(pwpch)')) pwpch <- split(mf$'(pwpch)', f)
+    if(!is.null(mf$'(pwcol)')) pwcol <- split(mf$'(pwcol)', f)
+    if(!is.null(mf$'(pwbg)')) pwbg <- split(mf$'(pwbg)',f)
+    beeswarm(split(mf[[response]], f), 
       pwpch = pwpch, pwcol = pwcol, pwbg = pwbg,
       dlab = dlab, glab = glab, ...)
 }
+
 
 ## hidden function  
 .calculateSwarm <- function(x, dsize, gsize) {
@@ -309,7 +331,7 @@ beeswarm.formula <- function (formula, data = NULL, subset, na.action = NULL,
 swarmx <- function(x, y, 
     xsize = xinch(0.08, warn.log = FALSE), 
     ysize = yinch(0.08, warn.log = FALSE),
-    log = NULL, cex = par('cex')) { 
+    log = NULL, cex = par("cex")) { 
   if(is.null(log)) 
     log <- paste(ifelse(par('xlog'), 'x', ''), ifelse(par('ylog'), 'y', ''), sep = '')
   xlog <- 'x' %in% strsplit(log, NULL)[[1L]]
@@ -328,7 +350,7 @@ swarmx <- function(x, y,
 swarmy <- function(x, y, 
     xsize = xinch(0.08, warn.log = FALSE), 
     ysize = yinch(0.08, warn.log = FALSE),
-    log = NULL, cex = par('cex')) { 
+    log = NULL, cex = par("cex")) { 
   if(is.null(log)) 
     log <- paste(ifelse(par('xlog'), 'x', ''), ifelse(par('ylog'), 'y', ''), sep = '')
   xlog <- 'x' %in% strsplit(log, NULL)[[1L]]
@@ -342,8 +364,4 @@ swarmy <- function(x, y,
   if(ylog) out$y <- 10 ^ out$y
   out
 }
-
-
-
-
 
