@@ -1,5 +1,11 @@
 beeswarm NEWS
 
+Changes in version 0.1.6 (2013-09-18)
+
+- The argument "labels" now gets recycled. 
+- "labels = NULL" is now the same as missing "labels"; i.e. labels are inferred from data.
+- There is now a "width" argument to control the size of corrals, if corrals are used.
+
 
 Changes in version 0.1.5 (2012-05-07)
 

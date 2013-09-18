@@ -21,6 +21,7 @@ beeswarm(x, \dots)
     cex = 1, spacing = 1, breaks = NULL,
     labels, at = NULL, 
     corral = c("none", "gutter", "wrap", "random", "omit"),
+    corralWidth,
     pch = par("pch"), col = par("col"), bg = NA, 
     pwpch = NULL, pwcol = NULL, pwbg = NULL,
     do.plot = TRUE, add = FALSE, log = FALSE,
@@ -46,10 +47,11 @@ beeswarm(x, \dots)
   \item{cex}{ Size of points relative to the default given by \code{par("cex")}. Unlike other plotting functions, this must be a single value.}
   \item{spacing}{ Relative spacing between points.}
   \item{breaks}{ Breakpoints (optional).  If \code{NULL}, breakpoints are chosen automatically. If \code{NA}, bins are not used (similar to \code{stripchart} with \code{method = "stack"}).}
-  \item{labels}{ Labels for each group.  By default, these are inferred from the data. }
+  \item{labels}{ Labels for each group. Recycled if necessary. By default, these are inferred from the data. }
   \item{at}{ Numeric vector giving the locations where the swarms should be drawn; defaults to \code{1:n} where \var{n} is the number of groups. }
-  \item{corral}{ Method to adjust points that would be placed outside their own  group region  (see Details). }
-  \item{pch, col, bg}{ Plotting characters and colors, specified by group (see Details). }
+  \item{corral}{ Method to adjust points that would be placed outside their own group region (see Details). }
+  \item{corralWidth}{ Width of the "corral" in user coordinates. If missing, a sensible value will be chosen. }
+  \item{pch, col, bg}{ Plotting characters and colors, specified by group. Recycled if necessary. (see Details). }
   \item{pwpch, pwcol, pwbg}{ \dQuote{Point-wise} plotting characters and colors, specified for each data point (see Details). }
   \item{do.plot}{ Draw a plot? }
   \item{add}{ Add to an existing plot? }

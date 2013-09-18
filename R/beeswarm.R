@@ -17,6 +17,7 @@ beeswarm.default <- function(x,
     cex = 1, spacing = 1, breaks = NULL,
     labels, at = NULL, 
     corral = c("none", "gutter", "wrap", "random", "omit"),
+    corralWidth,
     pch = par("pch"), col = par("col"), bg = NA, 
     pwpch = NULL, pwcol = NULL, pwbg = NULL,
     do.plot = TRUE, add = FALSE, log = FALSE, 
@@ -36,7 +37,7 @@ beeswarm.default <- function(x,
   n.groups <- length(x)
 
   #### Resolve group labels
-  if(missing(labels)) {
+  if(missing(labels) || is.null(labels)) {
     if(is.null(names(x))) {
       if(n.groups == 1) {
         labels <- NA
@@ -46,6 +47,8 @@ beeswarm.default <- function(x,
     } else {
       labels <- names(x)
     }
+  } else {
+    labels <- rep(labels, length.out = n.groups)
   }
 
   if (is.null(at)) 
@@ -216,23 +219,31 @@ beeswarm.default <- function(x,
       g.offset <- lapply(1:n.groups, function(i) x.index[[i]] * size.g)
   }
 
-  ## now check for runaway points
-  if(n.groups > 1) {
-    wid <- (min(at[-1] - at[-n.groups]) - (2 * size.g)) / 2
-  } else {
-    wid <- min(diff(c(par('usr')[1], at, par('usr')[2]))) - size.g
-  }
-  if(corral == 'gutter') {
-    g.offset <- lapply(g.offset, function(zz) pmin(wid, pmax(-wid, zz)))
-  }
-  if(corral == 'wrap') {
-    g.offset <- lapply(g.offset, function(zz) ((zz + wid) %% (wid * 2)) - wid)
-  }  
-  if(corral == 'random') {
-    g.offset <- lapply(g.offset, function(zz) ifelse(zz > wid | zz < -wid, runif(length(zz), -wid, wid), zz))
-  }
-  if(corral == 'omit') {
-    g.offset <- lapply(g.offset, function(zz) ifelse(zz > wid, NA, ifelse(zz < -wid, NA, zz)))
+  ## now check for runaway points (if "corral" has been set)
+  if(corral != 'none') {
+    if(missing(corralWidth)) {
+      if(n.groups > 1) {
+        corralWidth <- min(at[-1] - at[-n.groups]) - (2 * size.g)
+      } else {
+        corralWidth <- 2 * (min(diff(c(par('usr')[1], at, par('usr')[2]))) - size.g)
+      }
+    } else {
+      stopifnot(length(corralWidth) == 1)
+      stopifnot(corralWidth > 0)
+    }
+    halfCorralWidth <- corralWidth / 2
+    if(corral == 'gutter') {
+      g.offset <- lapply(g.offset, function(zz) pmin(halfCorralWidth, pmax(-halfCorralWidth, zz)))
+    }
+    if(corral == 'wrap') {
+      g.offset <- lapply(g.offset, function(zz) ((zz + halfCorralWidth) %% (halfCorralWidth * 2)) - halfCorralWidth)
+    }  
+    if(corral == 'random') {
+      g.offset <- lapply(g.offset, function(zz) ifelse(zz > halfCorralWidth | zz < -halfCorralWidth, runif(length(zz), -halfCorralWidth, halfCorralWidth), zz))
+    }
+    if(corral == 'omit') {
+      g.offset <- lapply(g.offset, function(zz) ifelse(zz > halfCorralWidth, NA, ifelse(zz < -halfCorralWidth, NA, zz)))
+    }
   }
   
   g.pos <- lapply(1:n.groups, function(i) at[i] + g.offset[[i]])
