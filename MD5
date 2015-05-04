@@ -1,11 +1,11 @@
-4cef87738c855a220bd7e59bf77c8bf9 *DESCRIPTION
+a9fb6c11b9a5cc9d4316b590acee4927 *DESCRIPTION
 b641ad00a22a083cca208de1fb31b268 *NAMESPACE
-6b1b075c2e8e5abbef4133bfc7938cb7 *NEWS
-01e6fa4e1ec5d55b5c588df9a711a829 *R/beeswarm.R
-643471dc2a194e0696ced4f40cd29f35 *R/bxplot.R
+edc1989bd7d1d741e9c7e27b0d1d56ae *NEWS
+1c98d3ec63a0d15d8421d8295415888c *R/beeswarm.R
+99b47bff686cbb9afaf34e18a74ce49d *R/bxplot.R
 16cc12d2742742718c88949f18d5ac5d *R/zzz.R
 bcf102fab14afb8d779c8c4148685174 *data/breast.RData
-d6942ba25f56ac90174b92d2751056a6 *man/beeswarm.Rd
+25cf8f880ceab450935c22bc91bb5f74 *man/beeswarm.Rd
 1ee38a2972fa0874a81c807e36dd22a6 *man/breast.Rd
 d7097bb52220995656e837936b892d12 *man/bxplot.Rd
-7fc0307d8fc01021340dd59121c0acf3 *man/swarmx.Rd
+39895501e8f57e66d39377f43cf0eae7 *man/swarmx.Rd

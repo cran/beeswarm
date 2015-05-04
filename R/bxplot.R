@@ -19,7 +19,7 @@ bxplot.default <- function(x, probs = c(0.25, 0.5, 0.75),
   }
   n <- length(x)
   n.probs <- length(probs)
-  if(is.null(lwd)) { 
+  if(is.null(lwd)) {  ## default is a thick line at the median
     lwd <- rep(par('lwd'), length.out = n.probs)
     if(0.5 %in% probs) lwd[probs == 0.5] <- par('lwd') * 3
   }
@@ -53,7 +53,6 @@ bxplot.formula <- function (formula, data = NULL, ..., subset, na.action = NULL)
         m$data <- as.data.frame(data)
     m$... <- NULL
     m$na.action <- na.action
-    require(stats, quietly = TRUE)
     m[[1L]] <- as.name("model.frame")
     mf <- eval(m, parent.frame())
     response <- attr(attr(mf, "terms"), "response")

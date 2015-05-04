@@ -1,10 +1,25 @@
 beeswarm NEWS
 
+Changes in version 0.2.0 (2015-05-04)
+
+- New arguments "side" and "priority" for beeswarm, swarmx, and swarmy. "side" allows swarms to grow on only one side rather than both sides. "priority" controls the order in which swarms are built, thus affecting the appearance of the plot. Thanks to Jon Lake and Brad Stiritz for suggestions.
+
+
+Changes in version 0.1.8 (2015-04-30)
+
+- Added "Depends: stats" to DESCRIPTION and removed "require(stats)" calls from code in order to achieve a clean package check
+
+
+Changes in version 0.1.7 (2014-08-05)
+
+- ".calculateSwarm" now performs the swarm point layout more efficiently
+
+
 Changes in version 0.1.6 (2013-09-18)
 
 - The argument "labels" now gets recycled. 
 - "labels = NULL" is now the same as missing "labels"; i.e. labels are inferred from data.
-- There is now a "width" argument to control the size of corrals, if corrals are used.
+- There is now a "corralWidth" argument to control the size of corrals, if corrals are used.
 
 
 Changes in version 0.1.5 (2012-05-07)

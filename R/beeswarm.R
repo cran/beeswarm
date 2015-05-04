@@ -17,7 +17,8 @@ beeswarm.default <- function(x,
     cex = 1, spacing = 1, breaks = NULL,
     labels, at = NULL, 
     corral = c("none", "gutter", "wrap", "random", "omit"),
-    corralWidth,
+    corralWidth, side = 0L, 
+    priority = c("ascending", "descending", "density", "random", "none"),
     pch = par("pch"), col = par("col"), bg = NA, 
     pwpch = NULL, pwcol = NULL, pwbg = NULL,
     do.plot = TRUE, add = FALSE, log = FALSE, 
@@ -25,15 +26,16 @@ beeswarm.default <- function(x,
     xlab = NULL, ylab = NULL, dlab = "", glab = "",
     ...) {
     
-  method = match.arg(method)
-  corral = match.arg(corral)
+  method <- match.arg(method)
+  corral <- match.arg(corral)
+  priority <- match.arg(priority)
   if(length(cex) > 1) {
     stop('the parameter "cex" must have length 1')
   }
+  stopifnot(side %in% -1:1)
   if(is.numeric(x)) {
     x <- list(x)
   }
-
   n.groups <- length(x)
 
   #### Resolve group labels
@@ -82,7 +84,7 @@ beeswarm.default <- function(x,
   if(is.null(glim)) {
     glim <- c(min(at) - 0.5, max(at) + 0.5)
   }
-  if(horizontal) { 
+  if(horizontal) {        ## plot is horizontal
     if(is.null(ylim)) 
       ylim <- glim
     if(is.null(xlim)) {
@@ -94,7 +96,7 @@ beeswarm.default <- function(x,
       xlab <- dlab
     if (is.null(ylab)) 
       ylab <- glab
-  } else {     ## vertical
+  } else {                ## plot is vertical
     if(is.null(xlim)) 
       xlim <- glim
     if(is.null(ylim)) {
@@ -166,18 +168,20 @@ beeswarm.default <- function(x,
     size.d <- yinch(0.08, warn.log = FALSE) * sizeMultiplier
   }
   
-## Calculate point positions g.pos, d.pos 
+  ##### Calculate point positions g.pos, d.pos 
   if(method == 'swarm') {
     if(horizontal) {
-      g.offset <- lapply(x, function(a) swarmy(x = a, y = rep(0, length(a)), cex = sizeMultiplier)$y)
+      g.offset <- lapply(x, function(a) swarmy(x = a, y = rep(0, length(a)), 
+          cex = sizeMultiplier, side = side, priority = priority)$y)
     } else {
-      g.offset <- lapply(x, function(a) swarmx(x = rep(0, length(a)), y = a, cex = sizeMultiplier)$x)
+      g.offset <- lapply(x, function(a) swarmx(x = rep(0, length(a)), y = a, 
+          cex = sizeMultiplier, side = side, priority = priority)$x)
     }
     d.pos <- x
-  } else {
-      if(method == 'hex') size.d <- size.d * sqrt(3) / 2
-    
-      if(log) {
+  } else {          ####   non-swarm methods
+    ##### first determine positions along the data axis
+      if(method == 'hex') size.d <- size.d * sqrt(3) / 2  
+      if(log) {              ## if data axis IS on a log scale
         if(is.null(breaks))
           breaks <- 10 ^ seq(log10(dlim[1]), log10(dlim[2]) + size.d, by = size.d)
         if(length(breaks) == 1 && is.na(breaks[1])) {
@@ -188,7 +192,7 @@ beeswarm.default <- function(x,
           d.index <- lapply(x, cut, breaks = breaks, labels = FALSE)
           d.pos <- lapply(d.index, function(a) mids[a])  
         }
-      } else {
+      } else {               ## if data axis is NOT on a log scale
         if(is.null(breaks))
           breaks <- seq(dlim[1], dlim[2] + size.d, by = size.d)
         if(length(breaks) == 1 && is.na(breaks[1])) {
@@ -200,26 +204,39 @@ beeswarm.default <- function(x,
           d.pos <- lapply(d.index, function(a) mids[a])  
         }
       }  
-    
+    ##### now determine positions along the group axis
       x.index <- lapply(d.index, function(v) {
-        if(length(na.omit(v)) == 0) return(v)
+        if(length(na.omit(v)) == 0) 
+          return(v)
         v.s <- lapply(split(v, v), seq_along)
-        if(method == 'center')
+        if(method %in% c('center', 'square') && side == -1)
+          v.s <- lapply(v.s, function(a) a - max(a))
+        else if(method %in% c('center', 'square') && side == 1)
+          v.s <- lapply(v.s, function(a) a - 1)
+        else if(method == 'center')
           v.s <- lapply(v.s, function(a) a - mean(a))
         else if(method == 'square')
           v.s <- lapply(v.s, function(a) a - floor(mean(a)))
         else if(method == 'hex') {
           odd.row <- (as.numeric(names(v.s)) %% 2) == 1
-          v.s[odd.row] <- lapply(v.s[odd.row], function(a) a - floor(mean(a)) - 0.25)
-          v.s[!odd.row] <- lapply(v.s[!odd.row], function(a) a - ceiling(mean(a)) + 0.25)
+          if(side == 0) {
+            v.s[ odd.row] <- lapply(v.s[ odd.row], function(a) a - floor(mean(a)) - 0.25)
+            v.s[!odd.row] <- lapply(v.s[!odd.row], function(a) a - ceiling(mean(a)) + 0.25)
+          } else if(side == -1) {
+            v.s[ odd.row] <- lapply(v.s[ odd.row], function(a) a - max(a))
+            v.s[!odd.row] <- lapply(v.s[!odd.row], function(a) a - max(a) - 0.5)
+          } else if(side ==  1) {
+            v.s[ odd.row] <- lapply(v.s[ odd.row], function(a) a - 1)
+            v.s[!odd.row] <- lapply(v.s[!odd.row], function(a) a - 0.5)
+          }
         }
         unsplit(v.s, v)
       }) 
       
       g.offset <- lapply(1:n.groups, function(i) x.index[[i]] * size.g)
-  }
+  }                   ###### end of non-swarm methods
 
-  ## now check for runaway points (if "corral" has been set)
+  ##### now check for runaway points (if "corral" has been set)
   if(corral != 'none') {
     if(missing(corralWidth)) {
       if(n.groups > 1) {
@@ -254,14 +271,14 @@ beeswarm.default <- function(x,
                     stringsAsFactors = FALSE)
 
   if(do.plot) {
-    if(horizontal) { 
+    if(horizontal) {     ## plot is horizontal
       points(out$y, out$x, pch = out$pch, col = out$col, bg = out$bg, cex = cex)  
       if(!add) {
         axis(1, ...)
         axis(2, at = at, labels = labels, tick = FALSE, ...)
         box(...)
       }
-    } else {
+    } else {             ## plot is vertical
       points(out$x, out$y, pch = out$pch, col = out$col, bg = out$bg, cex = cex)  
       if(!add) {
         axis(2, ...)
@@ -273,6 +290,7 @@ beeswarm.default <- function(x,
   invisible(out)
 }
 
+   
   
 beeswarm.formula <- function (formula, data = NULL, subset, na.action = NULL, 
     pwpch = NULL, pwcol = NULL, pwbg = NULL, dlab, glab, ...) 
@@ -286,7 +304,6 @@ beeswarm.formula <- function (formula, data = NULL, subset, na.action = NULL,
     m$dlab <- NULL
     m$glab <- NULL
     m$na.action <- na.action
-    require(stats, quietly = TRUE)
     m[[1]] <- as.name("model.frame")
     mf <- eval(m, parent.frame())
     response <- attr(attr(mf, "terms"), "response")
@@ -305,44 +322,62 @@ beeswarm.formula <- function (formula, data = NULL, subset, na.action = NULL,
 }
 
 
-## hidden function  
-.calculateSwarm <- function(x, dsize, gsize) {
+#### hidden function to do swarm layout
+.calculateSwarm <- function(x, dsize, gsize, side = 0L, priority = "ascending") {
   if(length(x) == 0) return(numeric(0))
-  out <- data.frame(x = x / dsize, y = 0, i = seq(along = x))
-  out <- out[order(out$x), ]
+  stopifnot(side %in% -1:1)
+  out <- data.frame(x = x / dsize, y = 0, index = seq(along = x))
+  
+  #### Determine the order in which points will be placed
+  if(     priority == "ascending" ) { out <- out[order( out$x), ] } ## default "smile"
+  else if(priority == "descending") { out <- out[order(-out$x), ] } ## frown
+  else if(priority == "none") {  } ## do not reorder
+  else if(priority == "density") {
+  	dens.x <- density(out$x, na.rm = TRUE)  ## compute kernel density estimate
+  	dens.interp <- approx(dens.x$x, dens.x$y, xout = out$x, rule = 2)  ## interpolated density
+  	out <- out[order(-dens.interp$y), ]  ## arrange outward from densest areas
+  }
+  else if(priority == "random") {
+	out <- out[sample(nrow(out)), ]
+  }
+  #### place the points
   if(nrow(out) > 1) {
-    for (i in 2:nrow(out)) {
-      xi <- out$x[i]
-      yi <- out$y[i]
-      pre <- out[1:(i - 1), ] # previous points
-      wh <- xi - pre$x < 1  # which ones are potentially overlapping
-      wh[is.na(wh)] <- FALSE  # missing values are not potentially overlapping
-      if(any(wh)) {
-        pre <- pre[wh, ]
-        pre <- pre[order(abs(pre$y)), ]
-        poty.off <- sqrt(1 - ((xi - pre$x) ^ 2)) # potential y offset
-        poty <- c(0, pre$y + poty.off, pre$y - poty.off) # potential y values
-        poty.bad <- sapply(poty, function(y) { # check for overlaps
-          any(((xi - pre$x) ^ 2 + (y - pre$y) ^ 2) < 0.999)
+    for (ii in 2:nrow(out)) {          ## we will place one point at a time
+      xi <- out$x[ii]
+       ## identify previously-placed points with potential to overlap the current point
+      isPotOverlap <- (abs(xi - out$x) < 1) & (1:nrow(out) < ii)
+      isPotOverlap[is.na(isPotOverlap)] <- FALSE
+      if(any(isPotOverlap)) {
+        pre.x <- out[isPotOverlap, 'x']
+        pre.y <- out[isPotOverlap, 'y']
+        poty.off <- sqrt(1 - ((xi - pre.x) ^ 2))         ## potential y offsets
+        poty <- switch(side + 2, 
+          c(0, pre.y - poty.off),
+          c(0, pre.y + poty.off, pre.y - poty.off),
+          c(0, pre.y + poty.off)
+        )
+        poty.bad <- sapply(poty, function(y) {           ## check for overlaps
+          any(((xi - pre.x) ^ 2 + (y - pre.y) ^ 2) < 0.999)
         })
         poty[poty.bad] <- Inf
-        out$y[i] <- poty[which.min(abs(poty))]
+        out$y[ii] <- poty[which.min(abs(poty))]
       } else {
-        out$y[i] <- 0
+        out$y[ii] <- 0
       }
     }
   }
-  out <- out[order(out$i), ]
-  out[is.na(out$x), 'y'] <- NA  # missing x values should have missing y values
-  out$y * gsize
+  out[is.na(out$x), 'y'] <- NA        ## missing x values should have missing y values
+  out$y[order(out$index)] * gsize
 }
 
 
-# jitter points horizontally
+### jitter points horizontally
 swarmx <- function(x, y, 
     xsize = xinch(0.08, warn.log = FALSE), 
     ysize = yinch(0.08, warn.log = FALSE),
-    log = NULL, cex = par("cex")) { 
+    log = NULL, cex = par("cex"), side = 0L, 
+    priority = c("ascending", "descending", "density", "random", "none")) { 
+  priority <- match.arg(priority)
   if(is.null(log)) 
     log <- paste(ifelse(par('xlog'), 'x', ''), ifelse(par('ylog'), 'y', ''), sep = '')
   xlog <- 'x' %in% strsplit(log, NULL)[[1L]]
@@ -351,17 +386,20 @@ swarmx <- function(x, y,
   stopifnot((length(unique(xy$x)) <= 1))
   if(xlog) xy$x <- log10(xy$x)
   if(ylog) xy$y <- log10(xy$y)
-  x.new <- xy$x + .calculateSwarm(xy$y, dsize = ysize * cex, gsize = xsize * cex)
+  x.new <- xy$x + .calculateSwarm(xy$y, dsize = ysize * cex, gsize = xsize * cex, 
+    side = side, priority = priority)
   out <- data.frame(x = x.new, y = y)
   if(xlog) out$x <- 10 ^ out$x
   out
 }
 
-# jitter points vertically
+### jitter points vertically
 swarmy <- function(x, y, 
     xsize = xinch(0.08, warn.log = FALSE), 
     ysize = yinch(0.08, warn.log = FALSE),
-    log = NULL, cex = par("cex")) { 
+    log = NULL, cex = par("cex"), side = 0L, 
+    priority = c("ascending", "descending", "density", "random", "none")) { 
+  priority <- match.arg(priority)
   if(is.null(log)) 
     log <- paste(ifelse(par('xlog'), 'x', ''), ifelse(par('ylog'), 'y', ''), sep = '')
   xlog <- 'x' %in% strsplit(log, NULL)[[1L]]
@@ -370,7 +408,8 @@ swarmy <- function(x, y,
   stopifnot((length(unique(xy$y)) <= 1))
   if(xlog) xy$x <- log10(xy$x)
   if(ylog) xy$y <- log10(xy$y)
-  y.new <- xy$y + .calculateSwarm(xy$x, dsize = xsize * cex, gsize = ysize * cex)
+  y.new <- xy$y + .calculateSwarm(xy$x, dsize = xsize * cex, gsize = ysize * cex, 
+    side = side, priority = priority)
   out <- data.frame(x = x, y = y.new)
   if(ylog) out$y <- 10 ^ out$y
   out

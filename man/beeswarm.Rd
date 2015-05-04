@@ -21,7 +21,8 @@ beeswarm(x, \dots)
     cex = 1, spacing = 1, breaks = NULL,
     labels, at = NULL, 
     corral = c("none", "gutter", "wrap", "random", "omit"),
-    corralWidth,
+    corralWidth, side = 0L, 
+    priority = c("ascending", "descending", "density", "random", "none"),
     pch = par("pch"), col = par("col"), bg = NA, 
     pwpch = NULL, pwcol = NULL, pwbg = NULL,
     do.plot = TRUE, add = FALSE, log = FALSE,
@@ -51,7 +52,9 @@ beeswarm(x, \dots)
   \item{at}{ Numeric vector giving the locations where the swarms should be drawn; defaults to \code{1:n} where \var{n} is the number of groups. }
   \item{corral}{ Method to adjust points that would be placed outside their own group region (see Details). }
   \item{corralWidth}{ Width of the "corral" in user coordinates. If missing, a sensible value will be chosen. }
-  \item{pch, col, bg}{ Plotting characters and colors, specified by group. Recycled if necessary. (see Details). }
+    \item{side}{ Direction to perform jittering: 0: both directions; 1: to the right or upwards; -1: to the left or downwards.}
+  \item{priority}{ Order used to perform point layout when method is \code{"swarm"}; ignored otherwise (see Details).}
+  \item{pch, col, bg}{ Plotting characters and colors, specified by group. Recycled if necessary (see Details). }
   \item{pwpch, pwcol, pwbg}{ \dQuote{Point-wise} plotting characters and colors, specified for each data point (see Details). }
   \item{do.plot}{ Draw a plot? }
   \item{add}{ Add to an existing plot? }
@@ -84,6 +87,9 @@ Alternatively, the \dQuote{point-wise} characteristics of each individual data p
 This function is intended to be mostly compatible with calls to \code{\link{stripchart}} or \code{\link{boxplot}}.  Thus, code that works with these functions should work with \code{beeswarm} with minimal modification.
 
 By default, swarms from different groups are not prevented from overlapping. Thus, large data sets, or data sets with uneven distributions, may produce somewhat unpleasing beeswarms. If this is a problem, consider reducing \code{cex}. Another approach is to control runaway points (those that would be plotted outside a region allotted to each group) with the \code{corral} argument: The default, \code{"none"}, does not control runaway points. \code{"gutter"} collects runaway points along the boundary between groups. \code{"wrap"} implements periodic boundaries. \code{"random"} places runaway points randomly in the region. \code{"omit"} omits runaway points. See Examples below.
+
+When using the \code{"swarm"} method, \code{priority} controls the order in which the points are placed; this generally has a noticeable effect on the resulting appearance. \code{"ascending"} gives the "traditional" beeswarm plot in which the points are placed in an ascending order. \code{"descending"} is the opposite. \code{"density"} prioritizes points with higher local density. \code{"random"} places points in a random order. \code{"none"} places points in the order provided.
+
 }
 
 \value{ A data frame with plotting information, invisibly. }
@@ -142,6 +148,21 @@ By default, swarms from different groups are not prevented from overlapping. Thu
     main = 'corral = "random"')
   beeswarm(distributions, col = 2:4, corral = "omit", 
     main = 'corral = "omit"')  
+ 
+  ## Demonstrate 'side' and 'priority'
+  par(mfrow = c(2,3))
+  beeswarm(distributions, col = 2:4, 
+    main = 'Default')
+  beeswarm(distributions, col = 2:4, side = -1, 
+    main = 'side = -1')
+  beeswarm(distributions, col = 2:4, side = 1, 
+    main = 'side = 1')
+  beeswarm(distributions, col = 2:4, priority = "descending", 
+    main = 'priority = "descending"')
+  beeswarm(distributions, col = 2:4, priority = "random", 
+    main = 'priority = "random"')  
+  beeswarm(distributions, col = 2:4, priority = "density", 
+    main = 'priority = "density"')  
 }
 
 \keyword{ hplot }
