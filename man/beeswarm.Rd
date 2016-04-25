@@ -25,7 +25,7 @@ beeswarm(x, \dots)
     priority = c("ascending", "descending", "density", "random", "none"),
     pch = par("pch"), col = par("col"), bg = NA, 
     pwpch = NULL, pwcol = NULL, pwbg = NULL,
-    do.plot = TRUE, add = FALSE, log = FALSE,
+    do.plot = TRUE, add = FALSE, axes = TRUE, log = FALSE,
     xlim = NULL, ylim = NULL, dlim = NULL, glim = NULL,
     xlab = NULL, ylab = NULL, dlab = "", glab = "",
     \dots)
@@ -58,6 +58,7 @@ beeswarm(x, \dots)
   \item{pwpch, pwcol, pwbg}{ \dQuote{Point-wise} plotting characters and colors, specified for each data point (see Details). }
   \item{do.plot}{ Draw a plot? }
   \item{add}{ Add to an existing plot? }
+  \item{axes}{ Draw axes and box? }
   \item{log}{ Use a logarithmic scale on the data axis? }
   \item{xlim, ylim}{ Limits of the plot. }
   \item{dlim, glim}{ An alternative way to specify limits (see Details). }
@@ -97,6 +98,7 @@ When using the \code{"swarm"} method, \code{priority} controls the order in whic
 \seealso{ \code{\link{stripchart}}, \code{\link{boxplot}} }
 
 \examples{ 
+  
   ## One of the examples from 'stripchart'
   beeswarm(decrease ~ treatment,
     data = OrchardSprays, log = TRUE, 
@@ -126,9 +128,9 @@ When using the \code{"swarm"} method, \code{priority} controls the order in whic
     title = "Censored", pch = 16, col = 1:2)
 
   ## The list interface
-  distributions <- list(runif = runif(100, min = -3, max = 3), 
-                        rnorm = rnorm(100),
-                        rlnorm = rlnorm(100, sdlog = 0.5))
+  distributions <- list(runif = runif(200, min = -3, max = 3), 
+                        rnorm = rnorm(200),
+                        rlnorm = rlnorm(200, sdlog = 0.5))
   beeswarm(distributions, col = 2:4)
 
   ## Demonstrate 'pwcol' with the list interface 

@@ -21,7 +21,7 @@ beeswarm.default <- function(x,
     priority = c("ascending", "descending", "density", "random", "none"),
     pch = par("pch"), col = par("col"), bg = NA, 
     pwpch = NULL, pwcol = NULL, pwbg = NULL,
-    do.plot = TRUE, add = FALSE, log = FALSE, 
+    do.plot = TRUE, add = FALSE, axes = TRUE, log = FALSE, 
     xlim = NULL, ylim = NULL, dlim = NULL, glim = NULL,
     xlab = NULL, ylab = NULL, dlab = "", glab = "",
     ...) {
@@ -80,9 +80,13 @@ beeswarm.default <- function(x,
       } else {
         dlim <- extendrange(x.val, f = 0.01)
       }
+  } else if (length(dlim) != 2) {
+    stop ("'dlim' must have length 2")
   }
   if(is.null(glim)) {
     glim <- c(min(at) - 0.5, max(at) + 0.5)
+  } else if (length(glim) != 2) {
+    stop ("'glim' must have length 2")
   }
   if(horizontal) {        ## plot is horizontal
     if(is.null(ylim)) 
@@ -109,6 +113,10 @@ beeswarm.default <- function(x,
     if (is.null(xlab)) 
       xlab <- glab
   }
+  if(length(xlim) != 2)
+    stop ("'xlim' must have length 2")
+  if(length(ylim) != 2)
+    stop ("'ylim' must have length 2")
   
   #### Resolve plotting characters and colors
   if(is.null(pwpch)) {
@@ -248,18 +256,23 @@ beeswarm.default <- function(x,
       stopifnot(length(corralWidth) == 1)
       stopifnot(corralWidth > 0)
     }
-    halfCorralWidth <- corralWidth / 2
+    corralLo <- (side - 1) * corralWidth / 2
+    corralHi <- (side + 1) * corralWidth / 2
     if(corral == 'gutter') {
-      g.offset <- lapply(g.offset, function(zz) pmin(halfCorralWidth, pmax(-halfCorralWidth, zz)))
+      g.offset <- lapply(g.offset, function(zz) pmin(corralHi, pmax(corralLo, zz)))
     }
     if(corral == 'wrap') {
-      g.offset <- lapply(g.offset, function(zz) ((zz + halfCorralWidth) %% (halfCorralWidth * 2)) - halfCorralWidth)
+      if(side == -1) { ## special case with side=-1: reverse the corral to avoid artifacts at zero
+        g.offset <- lapply(g.offset, function(zz) corralHi - ((corralHi - zz) %% corralWidth))
+      } else {
+        g.offset <- lapply(g.offset, function(zz) ((zz - corralLo) %% corralWidth) + corralLo)
+      }
     }  
     if(corral == 'random') {
-      g.offset <- lapply(g.offset, function(zz) ifelse(zz > halfCorralWidth | zz < -halfCorralWidth, runif(length(zz), -halfCorralWidth, halfCorralWidth), zz))
+      g.offset <- lapply(g.offset, function(zz) ifelse(zz > corralHi | zz < corralLo, yes = runif(length(zz), corralLo, corralHi), no = zz))
     }
     if(corral == 'omit') {
-      g.offset <- lapply(g.offset, function(zz) ifelse(zz > halfCorralWidth, NA, ifelse(zz < -halfCorralWidth, NA, zz)))
+      g.offset <- lapply(g.offset, function(zz) ifelse(zz > corralHi | zz < corralLo, yes = NA, no = zz))
     }
   }
   
@@ -273,14 +286,14 @@ beeswarm.default <- function(x,
   if(do.plot) {
     if(horizontal) {     ## plot is horizontal
       points(out$y, out$x, pch = out$pch, col = out$col, bg = out$bg, cex = cex)  
-      if(!add) {
+      if(axes & !add) {
         axis(1, ...)
         axis(2, at = at, labels = labels, tick = FALSE, ...)
         box(...)
       }
     } else {             ## plot is vertical
       points(out$x, out$y, pch = out$pch, col = out$col, bg = out$bg, cex = cex)  
-      if(!add) {
+      if(axes & !add) {
         axis(2, ...)
         axis(1, at = at, labels = labels, tick = FALSE, ...)
         box(...)
